@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "DeafAuth - Accessible Authentication Service",
   description: "Modern authentication service designed for accessibility, built for deaf and hearing-impaired users",
   keywords: ["authentication", "accessibility", "deaf", "hearing-impaired", "inclusive"],
-  generator: 'v0.dev'
+  generator: "v0.dev"
 }
 
 export default function RootLayout({
