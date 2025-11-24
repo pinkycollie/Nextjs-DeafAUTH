@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Accessibility, MessageSquare, Type, Vibrate } from "lucide-react"
 import { useAccessibility } from "@/components/accessibility-provider"
 import { useDeafAuth } from "@/hooks/use-deafauth"
@@ -42,7 +42,7 @@ export function AccessibilityPrompt({ open: controlledOpen, onClose, context, mo
 
   // Listen for prompt events
   useEffect(() => {
-    const handlePrompt = (event: CustomEvent) => {
+    const handlePrompt = () => {
       setIsOpen(true)
     }
 
@@ -77,7 +77,7 @@ export function AccessibilityPrompt({ open: controlledOpen, onClose, context, mo
       triggerHaptic("success")
       announceToScreenReader("Accessibility preferences saved successfully")
       handleClose()
-    } catch (error) {
+    } catch {
       triggerHaptic("error")
       announceToScreenReader("Error saving accessibility preferences")
     }

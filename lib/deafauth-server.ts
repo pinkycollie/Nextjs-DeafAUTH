@@ -1,5 +1,4 @@
 import { createServerClient } from "@/lib/supabase-server"
-import type { Database } from "@/lib/supabase"
 
 export interface DeafAuthProfile {
   user: {
