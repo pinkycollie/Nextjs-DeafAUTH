@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation"
-import { createServerClient } from "@/lib/supabase"
+import { createServerClient } from "@/lib/supabase-server"
 import { DashboardContent } from "@/components/dashboard-content"
+import { AccessibilityProvider } from "@/components/accessibility-provider"
+
+// Force dynamic rendering - this page requires authentication
+export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
   const supabase = createServerClient()
@@ -20,5 +24,9 @@ export default async function DashboardPage() {
     .eq("user_id", session.user.id)
     .single()
 
-  return <DashboardContent user={session.user} accessibilityProfile={accessibilityProfile} />
+  return (
+    <AccessibilityProvider>
+      <DashboardContent user={session.user} accessibilityProfile={accessibilityProfile} />
+    </AccessibilityProvider>
+  )
 }

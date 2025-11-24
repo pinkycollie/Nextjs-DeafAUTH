@@ -1,12 +1,16 @@
 {
-  "name": "my-v0-project",
+  "name": "deafauth-nextjs",
   "version": "0.1.0",
   "private": true,
+  "description": "DeafAUTH - Accessible Authentication for Next.js. Identity & Prompted Accessibility Layer for Deaf and hard-of-hearing users.",
+  "author": "DeafAUTH",
+  "license": "MIT",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",

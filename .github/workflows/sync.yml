@@ -1,0 +1,50 @@
+name: Sync to DeafAUTH Repository
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force sync even if no changes detected'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync to deafauth/nextjs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "DeafAUTH Sync Bot"
+          git config user.email "sync@deafauth.org"
+
+      - name: Push to target repository
+        run: |
+          # Add the target repository as a remote
+          git remote add target https://x-access-token:${{ secrets.DEAFAUTH_SYNC_TOKEN }}@github.com/deafauth/nextjs.git || true
+          
+          # Push to the target repository
+          git push target main:main --force
+        env:
+          DEAFAUTH_SYNC_TOKEN: ${{ secrets.DEAFAUTH_SYNC_TOKEN }}
+        continue-on-error: true
+
+      - name: Sync status
+        if: always()
+        run: |
+          echo "Sync completed. Check the target repository for updates."
+          echo "Target: github.com/deafauth/nextjs"
+          echo ""
+          echo "Note: If sync failed, ensure DEAFAUTH_SYNC_TOKEN secret is configured"
+          echo "with appropriate permissions for the target repository."
