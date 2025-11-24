@@ -36,11 +36,8 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
       // Deaf-first: Audio is supplementary, not primary
       setAudioFeedback(prefs.audioFeedback !== false)
       setFontSize(prefs.fontSize || "medium")
-    }
 
-    // Apply saved preferences on load
-    if (savedPrefs) {
-      const prefs = JSON.parse(savedPrefs)
+      // Apply saved preferences on load
       if (prefs.highContrast) {
         document.documentElement.classList.add("high-contrast")
       }
@@ -99,6 +96,9 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
   }
 
   const announceToScreenReader = (message: string) => {
+    // Timeout durations
+    const ANNOUNCEMENT_DURATION = 3000 // 3 seconds for visual indicators
+
     // Deaf-first: Create a visual announcement region as well
     const announcement = document.createElement("div")
     announcement.setAttribute("aria-live", "polite")
@@ -123,7 +123,7 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
       if (visualIndicator.parentNode) {
         document.body.removeChild(visualIndicator)
       }
-    }, 3000)
+    }, ANNOUNCEMENT_DURATION)
   }
 
   return (

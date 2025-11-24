@@ -188,7 +188,7 @@ input:valid:not(:placeholder-shown) {
   @apply border-green-500 border-2;
 }
 
-/* ARIA live regions should be visible for deaf users */
-[aria-live] {
+/* ARIA live regions - only style explicit visual feedback regions for deaf users */
+[aria-live][data-visual-feedback] {
   @apply p-2 rounded border-2 border-blue-500 bg-blue-50 dark:bg-blue-950;
 }

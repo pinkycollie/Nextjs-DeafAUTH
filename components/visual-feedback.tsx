@@ -13,6 +13,9 @@ export function VisualFeedback({ message }: VisualFeedbackProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
+  // Timeout durations for visual feedback
+  const VISUAL_FEEDBACK_DURATION = 6000 // 6 seconds for better visibility
+
   useEffect(() => {
     if (message) {
       setIsVisible(true)
@@ -23,7 +26,7 @@ export function VisualFeedback({ message }: VisualFeedbackProps) {
           if (!dismissed) {
             setIsVisible(false)
           }
-        }, 6000) // Longer duration for better visibility
+        }, VISUAL_FEEDBACK_DURATION)
         return () => clearTimeout(timer)
       }
     }
