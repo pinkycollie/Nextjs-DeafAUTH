@@ -31,17 +31,9 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
     if (savedPrefs) {
       const prefs = JSON.parse(savedPrefs)
       setHighContrast(prefs.highContrast || false)
-      // Deaf-first: Haptic is supplementary, not primary
       setHapticFeedback(prefs.hapticFeedback !== false)
-      // Deaf-first: Audio is supplementary, not primary
       setAudioFeedback(prefs.audioFeedback !== false)
       setFontSize(prefs.fontSize || "medium")
-
-      // Apply saved preferences on load
-      if (prefs.highContrast) {
-        document.documentElement.classList.add("high-contrast")
-      }
-      document.documentElement.classList.add(`font-${prefs.fontSize || "medium"}`)
     }
   }, [])
 
@@ -96,10 +88,6 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
   }
 
   const announceToScreenReader = (message: string) => {
-    // Timeout durations
-    const ANNOUNCEMENT_DURATION = 3000 // 3 seconds for visual indicators
-
-    // Deaf-first: Create a visual announcement region as well
     const announcement = document.createElement("div")
     announcement.setAttribute("aria-live", "polite")
     announcement.setAttribute("aria-atomic", "true")
@@ -108,22 +96,9 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
 
     document.body.appendChild(announcement)
 
-    // Also create a brief visual indicator
-    const visualIndicator = document.createElement("div")
-    visualIndicator.setAttribute("role", "status")
-    visualIndicator.className =
-      "fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium"
-    visualIndicator.textContent = message
-    document.body.appendChild(visualIndicator)
-
     setTimeout(() => {
-      if (announcement.parentNode) {
-        document.body.removeChild(announcement)
-      }
-      if (visualIndicator.parentNode) {
-        document.body.removeChild(visualIndicator)
-      }
-    }, ANNOUNCEMENT_DURATION)
+      document.body.removeChild(announcement)
+    }, 1000)
   }
 
   return (
