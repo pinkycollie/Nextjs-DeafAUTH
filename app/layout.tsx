@@ -19,7 +19,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {/* Skip link for keyboard navigation - Deaf-first accessibility */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <div id="main-content">
+          {children}
+        </div>
+      </body>
     </html>
   )
 }

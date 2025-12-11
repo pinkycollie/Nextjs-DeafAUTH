@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Vibrate } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Vibrate, Loader2 } from "lucide-react"
 import { useAccessibility } from "@/components/accessibility-provider"
 import { VisualFeedback } from "@/components/visual-feedback"
 import { signUp, signIn, resetPassword } from "@/lib/auth"
@@ -33,6 +33,9 @@ export function AuthForm() {
     const password = formData.get("password") as string
     const name = formData.get("name") as string
 
+    // Visual feedback: announce loading state for deaf users
+    announceToScreenReader(`Processing ${action}. Please wait.`)
+
     try {
       let result
       switch (action) {
@@ -54,7 +57,7 @@ export function AuthForm() {
       } else {
         const successMessage =
           action === "reset"
-            ? "Password reset email sent successfully"
+            ? "Password reset email sent successfully. Check your inbox."
             : action === "signup"
               ? "Account created successfully! Please check your email to verify."
               : "Signed in successfully!"
@@ -77,16 +80,31 @@ export function AuthForm() {
     <div className={`space-y-4 ${highContrast ? "high-contrast" : ""}`}>
       <VisualFeedback message={message} />
 
-      <Card className="shadow-lg border-2 focus-within:border-blue-500 transition-colors">
+      {/* Visual loading overlay for deaf-first accessibility */}
+      {isLoading && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-2xl border-4 border-blue-500 flex flex-col items-center gap-4">
+            <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
+            <p className="text-xl font-bold text-gray-900 dark:text-white">Processing...</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Please wait while we process your request</p>
+          </div>
+        </div>
+      )}
+
+      <Card className="shadow-lg border-2 focus-within:border-blue-600 transition-all">
         <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2">
-            <Lock className="w-5 h-5" />
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+            <Lock className="w-6 h-6" aria-hidden="true" />
             Authentication
           </CardTitle>
-          <CardDescription>Secure, accessible sign-in for everyone</CardDescription>
+          <CardDescription className="text-base">Secure, accessible sign-in for everyone</CardDescription>
           {hapticFeedback && (
-            <Badge variant="secondary" className="w-fit mx-auto">
-              <Vibrate className="w-3 h-3 mr-1" />
+            <Badge variant="secondary" className="w-fit mx-auto mt-2">
+              <Vibrate className="w-3 h-3 mr-1" aria-hidden="true" />
               Haptic Enabled
             </Badge>
           )}
@@ -150,11 +168,19 @@ export function AuthForm() {
 
                 <Button
                   type="submit"
-                  className="w-full text-lg p-3"
+                  className="w-full text-lg p-3 font-bold"
                   disabled={isLoading}
                   aria-describedby="signin-status"
+                  aria-busy={isLoading}
                 >
-                  {isLoading ? "Signing In..." : "Sign In"}
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                      Signing In...
+                    </span>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
             </TabsContent>
@@ -222,8 +248,15 @@ export function AuthForm() {
                   </p>
                 </div>
 
-                <Button type="submit" className="w-full text-lg p-3" disabled={isLoading}>
-                  {isLoading ? "Creating Account..." : "Create Account"}
+                <Button type="submit" className="w-full text-lg p-3 font-bold" disabled={isLoading} aria-busy={isLoading}>
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                      Creating Account...
+                    </span>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </form>
             </TabsContent>
@@ -246,8 +279,15 @@ export function AuthForm() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">We'll send you a password reset link</p>
                 </div>
 
-                <Button type="submit" className="w-full text-lg p-3" disabled={isLoading}>
-                  {isLoading ? "Sending Reset Link..." : "Send Reset Link"}
+                <Button type="submit" className="w-full text-lg p-3 font-bold" disabled={isLoading} aria-busy={isLoading}>
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                      Sending Reset Link...
+                    </span>
+                  ) : (
+                    "Send Reset Link"
+                  )}
                 </Button>
               </form>
             </TabsContent>
@@ -255,17 +295,19 @@ export function AuthForm() {
 
           {message && (
             <Alert
-              className={`mt-4 ${message.type === "error" ? "border-red-500 bg-red-50 dark:bg-red-950" : "border-green-500 bg-green-50 dark:bg-green-950"}`}
+              role="alert"
+              aria-live="polite"
+              className={`mt-4 border-l-4 ${message.type === "error" ? "border-l-red-600 border-red-500 bg-red-50 dark:bg-red-950" : "border-l-green-600 border-green-500 bg-green-50 dark:bg-green-950"}`}
             >
               {message.type === "error" ? (
-                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertCircle className="h-5 w-5 text-red-600" aria-hidden="true" />
               ) : (
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-green-600" aria-hidden="true" />
               )}
               <AlertDescription
-                className={
+                className={`font-semibold text-base ${
                   message.type === "error" ? "text-red-800 dark:text-red-200" : "text-green-800 dark:text-green-200"
-                }
+                }`}
               >
                 {message.text}
               </AlertDescription>
