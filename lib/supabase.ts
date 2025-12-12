@@ -1,11 +1,7 @@
-import { createClientComponentClient, createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 // Client-side Supabase client
 export const createClient = () => createClientComponentClient()
-
-// Server-side Supabase client
-export const createServerClient = () => createServerComponentClient({ cookies })
 
 // Database types (you can generate these with Supabase CLI)
 export type Database = {
@@ -48,7 +44,7 @@ export type Database = {
           id: string
           user_id: string
           session_token: string
-          device_info: any
+          device_info: unknown
           ip_address: string
           user_agent: string
           is_active: boolean
@@ -60,7 +56,7 @@ export type Database = {
           id?: string
           user_id: string
           session_token: string
-          device_info?: any
+          device_info?: unknown
           ip_address?: string
           user_agent?: string
           is_active?: boolean
@@ -72,7 +68,7 @@ export type Database = {
           id?: string
           user_id?: string
           session_token?: string
-          device_info?: any
+          device_info?: unknown
           ip_address?: string
           user_agent?: string
           is_active?: boolean

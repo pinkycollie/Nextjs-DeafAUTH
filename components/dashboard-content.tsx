@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Settings, LogOut, Palette, Volume2, Vibrate, Type, Loader2 } from "lucide-react"
+import { User, Settings, LogOut, Palette, Volume2, Vibrate, Type } from "lucide-react"
 import { useAccessibility } from "@/components/accessibility-provider"
 import { signOut } from "@/lib/auth"
 import { createClient } from "@/lib/supabase"
@@ -106,7 +106,6 @@ export function DashboardContent({ user, accessibilityProfile }: DashboardConten
 
   const handleSignOut = async () => {
     setIsLoading(true)
-    announceToScreenReader("Signing out...")
     const result = await signOut()
 
     if (result.error) {
@@ -122,45 +121,21 @@ export function DashboardContent({ user, accessibilityProfile }: DashboardConten
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      {/* Visual loading overlay for deaf-first accessibility */}
-      {isLoading && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-2xl border-4 border-blue-500 flex flex-col items-center gap-4">
-            <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
-            <p className="text-xl font-bold text-gray-900 dark:text-white">Processing...</p>
-          </div>
-        </div>
-      )}
-
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back!</h1>
-            <p className="text-gray-600 dark:text-gray-300 text-lg">{user.user_metadata?.name || user.email}</p>
+            <p className="text-gray-600 dark:text-gray-300">{user.user_metadata?.name || user.email}</p>
           </div>
           <Button
             onClick={handleSignOut}
             variant="outline"
             disabled={isLoading}
-            className="flex items-center gap-2 bg-transparent font-bold"
-            aria-busy={isLoading}
+            className="flex items-center gap-2 bg-transparent"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                Signing Out...
-              </>
-            ) : (
-              <>
-                <LogOut className="w-4 h-4" aria-hidden="true" />
-                Sign Out
-              </>
-            )}
+            <LogOut className="w-4 h-4" />
+            {isLoading ? "Signing Out..." : "Sign Out"}
           </Button>
         </div>
 
@@ -195,18 +170,15 @@ export function DashboardContent({ user, accessibilityProfile }: DashboardConten
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" aria-hidden="true" />
+              <Settings className="w-5 h-5" />
               Accessibility Preferences
               {isSaving && (
-                <Badge variant="secondary" className="ml-2 animate-pulse">
-                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                <Badge variant="secondary" className="ml-2">
                   Saving...
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription className="text-base">
-              Customize your experience for optimal accessibility. Visual feedback is our primary communication method.
-            </CardDescription>
+            <CardDescription>Customize your experience for optimal accessibility</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* High Contrast Mode */}
@@ -233,13 +205,13 @@ export function DashboardContent({ user, accessibilityProfile }: DashboardConten
             {/* Haptic Feedback */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Vibrate className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                <Vibrate className="w-5 h-5 text-gray-600" />
                 <div>
                   <Label htmlFor="haptic-feedback" className="text-base font-medium">
-                    Haptic Feedback (Supplementary)
+                    Haptic Feedback
                   </Label>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Optional: Feel vibrations as additional feedback to visual cues
+                    Feel vibrations for important notifications
                   </p>
                 </div>
               </div>
@@ -248,21 +220,18 @@ export function DashboardContent({ user, accessibilityProfile }: DashboardConten
                 checked={hapticFeedback}
                 onCheckedChange={handleHapticToggle}
                 disabled={isSaving}
-                aria-label="Toggle haptic feedback"
               />
             </div>
 
             {/* Audio Feedback */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Volume2 className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                <Volume2 className="w-5 h-5 text-gray-600" />
                 <div>
                   <Label htmlFor="audio-feedback" className="text-base font-medium">
-                    Audio Feedback (Supplementary)
+                    Audio Feedback
                   </Label>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Optional: Enable sound as additional feedback to visual cues
-                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Enable sound notifications and alerts</p>
                 </div>
               </div>
               <Switch
@@ -270,7 +239,6 @@ export function DashboardContent({ user, accessibilityProfile }: DashboardConten
                 checked={audioFeedback}
                 onCheckedChange={handleAudioToggle}
                 disabled={isSaving}
-                aria-label="Toggle audio feedback"
               />
             </div>
 

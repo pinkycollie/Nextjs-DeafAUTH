@@ -116,24 +116,13 @@
   border: 0;
 }
 
-/* Focus Indicators - Enhanced for keyboard navigation (deaf-first) */
-*:focus-visible {
-  @apply outline-none ring-4 ring-blue-600 ring-offset-2;
+/* Focus Indicators */
+*:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
 }
 
-.high-contrast *:focus-visible {
-  @apply ring-yellow-400 ring-4 ring-offset-4;
-}
-
-/* Skip Links for keyboard navigation */
-.skip-link {
-  @apply absolute left-0 top-0 z-50 bg-blue-600 text-white px-4 py-2 font-bold;
-  transform: translateY(-100%);
-  transition: transform 0.2s;
-}
-
-.skip-link:focus {
-  transform: translateY(0);
+.high-contrast *:focus {
+  @apply ring-yellow-400 ring-4;
 }
 
 /* Animation Preferences */
@@ -143,52 +132,4 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* Visual Feedback Enhancements for Deaf-First Design */
-/* Stronger visual indicators for interactive elements */
-button, a, [role="button"] {
-  @apply transition-all duration-200;
-}
-
-button:hover, a:hover, [role="button"]:hover {
-  @apply scale-105;
-}
-
-button:active, a:active, [role="button"]:active {
-  @apply scale-95;
-}
-
-/* Loading states should be highly visible */
-.loading-indicator {
-  @apply border-4 border-blue-200 border-t-blue-600 rounded-full w-8 h-8 animate-spin;
-}
-
-/* Error states must be visually prominent */
-.error-state {
-  @apply border-l-4 border-red-600 bg-red-50 dark:bg-red-950;
-}
-
-/* Success states must be visually prominent */
-.success-state {
-  @apply border-l-4 border-green-600 bg-green-50 dark:bg-green-950;
-}
-
-/* Warning states must be visually prominent */
-.warning-state {
-  @apply border-l-4 border-yellow-600 bg-yellow-50 dark:bg-yellow-950;
-}
-
-/* Form validation - visual first */
-input:invalid:not(:placeholder-shown) {
-  @apply border-red-500 border-2;
-}
-
-input:valid:not(:placeholder-shown) {
-  @apply border-green-500 border-2;
-}
-
-/* ARIA live regions - only style explicit visual feedback regions for deaf users */
-[aria-live][data-visual-feedback] {
-  @apply p-2 rounded border-2 border-blue-500 bg-blue-50 dark:bg-blue-950;
 }
