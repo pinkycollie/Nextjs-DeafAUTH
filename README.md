@@ -218,7 +218,7 @@ function App() {
 - **id** (uuid)
 - **user_id**
 - **module_id**
-- **event_type** ("offered" | "accepted" | "declined" | "delivered" | "issue_reported" | "profile_submitted" | "module_completed")
+- **event_type** ("accessibility_profile_submitted" | "accommodation_offered" | "accommodation_accepted" | "accommodation_declined" | "accommodation_delivered" | "training_module_completed" | "accessibility_issue_reported")
 - **metadata** (jsonb: { provider?: string, notes?: string })
 - **timestamp** (timestamptz)
 
@@ -314,8 +314,13 @@ CREATE TABLE accommodation_events (
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   module_id TEXT,
   event_type TEXT NOT NULL CHECK (event_type IN (
-    'offered', 'accepted', 'declined', 'delivered', 
-    'issue_reported', 'profile_submitted', 'module_completed'
+    'accessibility_profile_submitted',
+    'accommodation_offered',
+    'accommodation_accepted',
+    'accommodation_declined',
+    'accommodation_delivered',
+    'training_module_completed',
+    'accessibility_issue_reported'
   )),
   metadata JSONB DEFAULT '{}'::jsonb,
   timestamp TIMESTAMPTZ DEFAULT NOW()
