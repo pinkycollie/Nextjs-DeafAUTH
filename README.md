@@ -2,6 +2,14 @@
 
 [![CI/CD](https://github.com/pinkycollie/Nextjs-DeafAUTH/actions/workflows/ci.yml/badge.svg)](https://github.com/pinkycollie/Nextjs-DeafAUTH/actions/workflows/ci.yml)
 [![Dependabot](https://img.shields.io/badge/Dependabot-enabled-brightgreen.svg)](https://github.com/pinkycollie/Nextjs-DeafAUTH/network/updates)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-14+-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3+-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Accessibility](https://img.shields.io/badge/Accessibility-WCAG_2.1-blue?logo=accessibility)](https://www.w3.org/WAI/WCAG21/quickref/)
+[![a11y: Deaf Friendly](https://img.shields.io/badge/a11y-Deaf_Friendly-purple)](https://github.com/pinkycollie/Nextjs-DeafAUTH)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/pinkycollie/Nextjs-DeafAUTH/pulls)
 
 DeafAUTH is a focused identity and accessibility orchestration layer for Next.js apps, built to help teams reliably discover, prompt for, persist, and track accessibility needs for Deaf and hard-of-hearing learners. It treats accessibility preferences as first-class identity metadata and provides integration patterns, small SDKs, and tracking primitives so organizations (for example: vr4deaf.org) can ensure learners get the accommodations they need throughout training.
 
