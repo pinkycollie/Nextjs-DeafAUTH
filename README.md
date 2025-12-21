@@ -20,7 +20,7 @@ This repository contains the specification and reference implementation for Deaf
 ### Prerequisites
 - Node.js 18+ 
 - pnpm (recommended) or npm
-- Supabase account (for authentication backend)
+- Supabase project (DeafAUTH v1 auth backend)
 
 ### Installation
 
@@ -48,6 +48,8 @@ Create a `.env.local` file with:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+**Supabase Auth (branded as "DeafAUTH") is the only identity provider.** All profile and accessibility data is stored in Supabase Postgres with Row Level Security.
 
 ## 📦 Auto-Deploy & Auto-Update
 
@@ -100,20 +102,20 @@ DeafAUTH solves this by modeling accessibility as identity metadata and providin
 
 ## Core Features
 
-- Lightweight Next.js layer (middleware + server helpers + client SDK)
+- Lightweight Next.js layer (middleware + server helpers + client SDK) on top of Supabase Auth
 - Contextual prompt flows (first use, before modules, device change)
 - Accessibility profile model: sign language, captions, pace, device type
-- Delivery and outcome tracking (events & audit trail)
-- Extensible adapters (auth providers, DBs, analytics)
+- Delivery and outcome tracking (events & audit trail) in Supabase
 - App Router + Pages Router support
-- Accessibility-first UI patterns and copy guidance (keyboard + screen reader friendly)
+- Accessibility-first UI patterns and copy guidance
 
 ## Integration Overview
 
-DeafAUTH is intended to be integrated at three levels:
-1. **Middleware** — hydrate identity + profile and optionally redirect to prompt flows early.
-2. **Server helpers** — read/update profiles, persist events, enforce retention and privacy rules.
-3. **Client SDK & hooks** — show prompts, update profile, and record in-app events.
+DeafAUTH integrates at three levels:
+
+1. **Middleware** — hydrate identity + accessibility profile and optionally redirect to prompt flows early.
+2. **Server helpers** — read/update profiles and persist events in Supabase. Enforce retention and privacy rules.
+3. **Client SDK & hooks** — show prompts, update profile, and record accommodation events from the UI.
 
 ## Quick Start (Usage)
 
@@ -142,30 +144,43 @@ export default withDeafAuth({
 import { getDeafAuthProfile } from '@/lib/deafauth-server';
 
 export default async function DashboardPage() {
-  const profile = await getDeafAuthProfile();
-  return <Dashboard user={profile.user} accessibility={profile.accessibility} />;
+  const profile = await getDeafAuthProfile(); // reads Supabase user + accessibility prefs
+  return (
+    <Dashboard
+      user={profile.user}
+      accessibility={profile.accessibility}
+    />
+  );
 }
 ```
 
 ### Client Hook
 
 ```ts
+import { useEffect } from 'react';
 import { useDeafAuth } from '@/hooks/use-deafauth';
 
-function TrainingModule({ moduleId }) {
+function TrainingModule({ moduleId }: { moduleId: string }) {
   const { profile, promptAccessibility, recordEvent } = useDeafAuth();
 
   useEffect(() => {
     if (!profile?.accessibilityConfirmed) {
       promptAccessibility({ context: 'module-start', moduleId });
     }
-  }, [profile]);
+  }, [profile, moduleId, promptAccessibility]);
 
   const onAccommodationDelivered = () => {
-    recordEvent('accommodation_delivered', { type: 'sign-interpreter', moduleId });
+    recordEvent('accommodation_delivered', {
+      type: 'sign-interpreter',
+      moduleId,
+    });
   };
 
-  return (/* UI adapted to profile */);
+  return (
+    // UI adapted to profile.accessibility
+    // and calls onAccommodationDelivered when support is actually delivered
+    null
+  );
 }
 ```
 
@@ -185,36 +200,41 @@ function App() {
 }
 ```
 
-## Data Model
+## Data Model (Supabase)
 
-### User
-- id
-- name
-- email
-- authProviderId
+### User (profiles)
+- **id** (uuid, matches auth.users.id)
+- **email** 
+- **display_name**
+- **default_org_id** (for multi-tenant)
 
-### AccessibilityProfile
-- userId
-- preferredLanguage (e.g., "en", "es")
-- primarySupport (e.g., "sign-language", "captions", "text-only")
-- captions: { enabled: boolean, language: string, size?: string }
-- interpreterNeeded: boolean
-- pacePreference: "normal" | "slow" | "manual"
-- deviceTypes: ["vr-headset", "desktop", "mobile"]
-- accessibilityConfirmed: boolean
-- lastUpdatedAt: ISO timestamp
+### AccessibilityProfile (accessibility_prefs)
+- **user_id** (fk → profiles.id)
+- **preferred_language** (e.g., "en", "es")
+- **primary_support** ("sign-language" | "captions" | "text-only" | "other")
+- **captions** object:
+  - **enabled** (boolean)
+  - **language** (string)
+  - **size** (optional string)
+- **interpreter_needed** (boolean)
+- **pace_preference** ("normal" | "slow" | "manual")
+- **device_types** (JSON array: ["vr-headset", "desktop", "mobile"])
+- **accessibility_confirmed** (boolean)
+- **last_updated_at** (timestamptz)
 
-AccommodationEvent / TrainingProgress
-- id
-- userId
-- moduleId
-- eventType: "offered" | "accepted" | "declined" | "delivered" | "issue_reported"
-- metadata: { provider?: string, notes?: string }
-- timestamp: ISO timestamp
+### AccommodationEvent / TrainingProgress (accommodation_events)
+- **id** (uuid)
+- **user_id**
+- **module_id**
+- **event_type** ("accessibility_profile_submitted" | "accommodation_offered" | "accommodation_accepted" | "accommodation_declined" | "accommodation_delivered" | "training_module_completed" | "accessibility_issue_reported")
+- **metadata** (jsonb: { provider?: string, notes?: string })
+- **timestamp** (timestamptz)
+
+**All of this lives in Supabase Postgres with RLS enforcing org and user scoping.**
 
 ## Events & Tracking
 
-DeafAUTH standardizes a small set of events to drive analytics, audit, and reporting:
+**Standardized events (stored in accommodation_events):**
 - accessibility_profile_submitted
 - accommodation_offered
 - accommodation_accepted
@@ -223,17 +243,220 @@ DeafAUTH standardizes a small set of events to drive analytics, audit, and repor
 - training_module_completed
 - accessibility_issue_reported
 
-Each event SHOULD include:
-- eventType
-- userId or anonymousId
-- context (moduleId, page, device)
-- timestamp
-- metadata (free-form JSON)
+Each event **SHOULD** include:
+- **eventType**
+- **userId**
+- **context** (e.g., moduleId, page, device)
+- **timestamp**
+- **metadata** (free-form JSON)
 
-Adapters
-- Auth: NextAuth, Clerk, custom JWT
-- Datastore: Postgres, DynamoDB, Fauna, SQLite (dev)
-- Analytics: Segment, Amplitude, self-hosted event store
+## Adapters (no Clerk)
+
+- **Auth**: Supabase Auth only
+- **Datastore**: Supabase Postgres (primary), optionally mirrored to other DBs
+- **Analytics**: Segment / Amplitude / custom event store (optional)
+
+**No Clerk.** If you see Clerk mentioned anywhere in the repo or docs, replace it with: _"Auth provider: Supabase Auth (DeafAUTH project)."_
+
+## Example Setup: vr4deaf.org
+
+This section provides a concrete example of how vr4deaf.org would integrate DeafAUTH for VR-based Deaf training modules.
+
+### Required Supabase Tables
+
+**1. profiles table**
+```sql
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  display_name TEXT,
+  default_org_id UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can read their own profile
+CREATE POLICY "Users can read own profile" ON profiles
+  FOR SELECT USING (auth.uid() = id);
+
+-- Policy: Users can update their own profile
+CREATE POLICY "Users can update own profile" ON profiles
+  FOR UPDATE USING (auth.uid() = id);
+```
+
+**2. accessibility_prefs table**
+```sql
+CREATE TABLE accessibility_prefs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  preferred_language TEXT DEFAULT 'en',
+  primary_support TEXT CHECK (primary_support IN ('sign-language', 'captions', 'text-only', 'other')),
+  captions JSONB DEFAULT '{"enabled": true, "language": "en", "size": "medium"}'::jsonb,
+  interpreter_needed BOOLEAN DEFAULT false,
+  pace_preference TEXT DEFAULT 'normal' CHECK (pace_preference IN ('normal', 'slow', 'manual')),
+  device_types JSONB DEFAULT '["desktop"]'::jsonb,
+  accessibility_confirmed BOOLEAN DEFAULT false,
+  last_updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+-- Enable Row Level Security
+ALTER TABLE accessibility_prefs ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can read their own accessibility preferences
+CREATE POLICY "Users can read own accessibility prefs" ON accessibility_prefs
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Policy: Users can insert/update their own accessibility preferences
+CREATE POLICY "Users can manage own accessibility prefs" ON accessibility_prefs
+  FOR ALL USING (auth.uid() = user_id);
+```
+
+**3. accommodation_events table**
+```sql
+CREATE TABLE accommodation_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  module_id TEXT,
+  event_type TEXT NOT NULL CHECK (event_type IN (
+    'accessibility_profile_submitted',
+    'accommodation_offered',
+    'accommodation_accepted',
+    'accommodation_declined',
+    'accommodation_delivered',
+    'training_module_completed',
+    'accessibility_issue_reported'
+  )),
+  metadata JSONB DEFAULT '{}'::jsonb,
+  timestamp TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE accommodation_events ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can read their own events
+CREATE POLICY "Users can read own events" ON accommodation_events
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Policy: Users can insert their own events
+CREATE POLICY "Users can insert own events" ON accommodation_events
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Index for faster queries
+CREATE INDEX idx_accommodation_events_user_id ON accommodation_events(user_id);
+CREATE INDEX idx_accommodation_events_module_id ON accommodation_events(module_id);
+CREATE INDEX idx_accommodation_events_timestamp ON accommodation_events(timestamp);
+```
+
+### Redirect URLs Configuration
+
+In your Supabase project settings (Authentication → URL Configuration):
+
+- **Site URL**: `https://vr4deaf.org`
+- **Redirect URLs** (whitelist these):
+  - `https://vr4deaf.org/auth/callback`
+  - `https://vr4deaf.org/dashboard`
+  - `https://vr4deaf.org/training/*`
+  - `http://localhost:3000/auth/callback` (for local development)
+  - `http://localhost:3000/dashboard` (for local development)
+
+### Event Logging During Training Modules
+
+**Example: User starts a VR training module**
+
+```typescript
+// app/training/[moduleId]/page.tsx
+'use client';
+
+import { useEffect } from 'react';
+import { useDeafAuth } from '@/hooks/use-deafauth';
+import { useParams } from 'next/navigation';
+
+export default function TrainingModulePage() {
+  const { moduleId } = useParams();
+  const { profile, recordEvent, promptAccessibility } = useDeafAuth();
+
+  // On module start, check accessibility preferences
+  useEffect(() => {
+    if (!profile?.accessibilityConfirmed) {
+      // Prompt user before starting VR session
+      promptAccessibility({ 
+        context: 'vr-module-start', 
+        moduleId: moduleId as string 
+      });
+    } else {
+      // Log that accommodation was offered
+      recordEvent('accommodation_offered', {
+        moduleId,
+        accommodationType: profile.accessibility?.primarySupport,
+        device: 'vr-headset'
+      });
+    }
+  }, [profile, moduleId, promptAccessibility, recordEvent]);
+
+  // When sign language interpreter joins
+  const onInterpreterJoined = () => {
+    recordEvent('accommodation_delivered', {
+      type: 'sign-interpreter',
+      moduleId,
+      provider: 'vr4deaf-interpreter-network',
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  // When captions are enabled in VR
+  const onCaptionsEnabled = () => {
+    recordEvent('accommodation_delivered', {
+      type: 'captions',
+      moduleId,
+      language: profile?.accessibility?.captions?.language || 'en',
+      size: profile?.accessibility?.captions?.size || 'medium'
+    });
+  };
+
+  // When user completes module
+  const onModuleComplete = () => {
+    recordEvent('training_module_completed', {
+      moduleId,
+      duration: '45min',
+      accessibilityUsed: profile?.accessibility?.primarySupport,
+      completionRate: 100
+    });
+  };
+
+  // If user reports an accessibility issue
+  const onReportIssue = (issue: string) => {
+    recordEvent('accessibility_issue_reported', {
+      moduleId,
+      issue,
+      device: 'vr-headset',
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  return (
+    <div>
+      {/* VR Training Module UI */}
+      {/* Buttons to trigger events as needed */}
+    </div>
+  );
+}
+```
+
+### Typical Event Flow for vr4deaf.org
+
+1. **User signs up** → Creates profile in `profiles` table via Supabase Auth
+2. **First visit** → Middleware detects no accessibility_prefs, redirects to setup
+3. **User submits preferences** → Stored in `accessibility_prefs`, logs `profile_submitted` event
+4. **User enters VR training module** → Logs `accommodation_offered` event
+5. **Sign interpreter joins** → Logs `accommodation_delivered` event with interpreter metadata
+6. **User completes module** → Logs `module_completed` event with duration and satisfaction
+7. **Issue during training** → User reports, logs `accessibility_issue_reported` event
+
+All events are queryable from the `accommodation_events` table for analytics dashboards, compliance audits, and training effectiveness reports.
 
 ## Privacy & Security
 
@@ -258,7 +481,7 @@ DeafAUTH handles sensitive identity & accessibility data. Follow these principle
 
 - v0.1: Spec, middleware, simple server APIs, client hook
 - v0.2: Prompt UI components + examples (App Router + Pages Router)
-- v0.3: Adapters for NextAuth/Clerk + Postgres example
+- v0.3: Supabase integration with Postgres schema and RLS policies
 - v0.4: Built-in analytics adapter and demo dashboards
 - v1.0: Stable API, privacy toolkit, community contributions
 
