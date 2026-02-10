@@ -1,36 +1,39 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from "next/server";
 
-  // Refresh session if expired - required for Server Components
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
-  // Protected routes
-  const protectedRoutes = ["/dashboard"]
-  const publicRoutes = ["/", "/auth"]
+export const createClient = (request: NextRequest) => {
+  // Create an unmodified response
+  let supabaseResponse = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
-  const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
-  const isPublicRoute = publicRoutes.includes(req.nextUrl.pathname)
+  const supabase = createServerClient(
+    supabaseUrl!,
+    supabaseKey!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    },
+  );
 
-  // Redirect to dashboard if user is authenticated and on public route
-  if (session && isPublicRoute && req.nextUrl.pathname === "/") {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
-  }
+  return supabaseResponse
+};
 
-  // Redirect to home if user is not authenticated and on protected route
-  if (!session && isProtectedRoute) {
-    return NextResponse.redirect(new URL("/", req.url))
-  }
-
-  return res
-}
-
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-}
