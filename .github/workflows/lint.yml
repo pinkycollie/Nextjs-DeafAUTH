@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Lint
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   lint-and-build:
-    name: Lint and Build
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -34,16 +34,13 @@ jobs:
 
       - name: Run linting
         run: pnpm lint
-        continue-on-error: true
-
-      - name: Build application
-        run: pnpm build
+        continue-on-error: false
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/ud-artifact@v4
         with:
           name: build-output
-          path: .next/
+          path: .runner/
           retention-days: 7
 
   type-check:
