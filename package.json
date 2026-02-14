@@ -58,7 +58,7 @@
     "next-themes": "^0.4.4",
     "react": "^18",
     "react-day-picker": "9.13.0",
-    "react-dom": "^18",
+    "react-dom": "^19.2.3",
     "react-hook-form": "^7.69.0",
     "react-resizable-panels": "^4.0.14",
     "recharts": "3.6.0",
