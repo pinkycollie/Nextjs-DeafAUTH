@@ -1,36 +1,19 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
 
-  // Refresh session if expired - required for Server Components
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
 
-  // Protected routes
-  const protectedRoutes = ["/dashboard"]
-  const publicRoutes = ["/", "/auth"]
+⚠️ NEXT.JS DECISION (IMPORTANT)
 
-  const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
-  const isPublicRoute = publicRoutes.includes(req.nextUrl.pathname)
+👉 Use Next ONLY for:
+	•	UI
+	•	routing
 
-  // Redirect to dashboard if user is authenticated and on public route
-  if (session && isPublicRoute && req.nextUrl.pathname === "/") {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
-  }
+🚫 DO NOT USE:
+	•	API routes
+	•	server logic
+	•	sensitive processing
 
-  // Redirect to home if user is not authenticated and on protected route
-  if (!session && isProtectedRoute) {
-    return NextResponse.redirect(new URL("/", req.url))
-  }
+ALL logic goes to:
 
-  return res
-}
+api.mbtq.dev
 
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-}
+

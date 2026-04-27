@@ -1,0 +1,12 @@
+# .github/workflows/deploy.yml
+on:
+ push:
+   tags: ["*"]
+jobs:
+ tests:
+   uses: ./.github/workflows/tests.yml
+ deploy:
+   needs: tests
+   runs-on: ubuntu-latest
+   steps:
+     - run: echo "Deploying..."
